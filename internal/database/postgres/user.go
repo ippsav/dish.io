@@ -20,7 +20,7 @@ func (s *Store) CreateUser(ctx context.Context, user *domain.User) (*domain.User
 }
 
 func (s *Store) FindUserByID(ctx context.Context, id string) (*domain.User, error) {
-	statement, err := s.DB.PrepareContext(ctx, "SELECT * from users where id=?")
+	statement, err := s.DB.PrepareContext(ctx, "SELECT * from users where id=$1")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not prepare select statement")
 	}
@@ -33,7 +33,7 @@ func (s *Store) FindUserByID(ctx context.Context, id string) (*domain.User, erro
 }
 
 func (s *Store) FindUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	statement, err := s.DB.PrepareContext(ctx, "SELECT * from users where email=?")
+	statement, err := s.DB.PrepareContext(ctx, "SELECT * from users where email=$1")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not prepare select statement")
 	}
@@ -43,4 +43,17 @@ func (s *Store) FindUserByEmail(ctx context.Context, email string) (*domain.User
 		return nil, errors.Wrap(err, "could not select from users db")
 	}
 	return user, nil
+}
+
+func (s *Store) CheckUserExists(ctx context.Context, username, email string) (bool, error) {
+	var count int
+	statement, err := s.DB.PrepareContext(ctx, "SELECT COUNT(*) FROM users WHERE username=$1 OR email=$2")
+	if err != nil {
+		return false, errors.Wrap(err, "could not prepare select statement")
+	}
+	err = statement.QueryRowContext(ctx, username, email).Scan(&count)
+	if err != nil {
+		return false, errors.Wrap(err, "could not select from users table")
+	}
+	return count != 0, nil
 }

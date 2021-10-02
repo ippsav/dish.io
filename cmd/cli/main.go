@@ -25,9 +25,10 @@ func main() {
 		os.Exit(0)
 	}
 	store := &postgres.Store{DB: db}
+	// --------------- Commands ----------------
 	// seeding database command
 	seedCmd := flag.NewFlagSet("seed", flag.ExitOnError)
-	// seed command argument
+	// seed command arguments
 	seedFile := seedCmd.String("filename", "seed/seed.json", "Provide a json file containing seeding data to seed database")
 
 	// checking length of arguments
