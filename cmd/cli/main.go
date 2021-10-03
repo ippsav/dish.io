@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/dish.io/cmd/cli/seed"
 	"github.com/dish.io/internal/database/postgres"
+	"github.com/dish.io/internal/services/user"
 	_ "github.com/lib/pq"
 	"os"
 )
@@ -25,6 +26,8 @@ func main() {
 		os.Exit(0)
 	}
 	store := &postgres.Store{DB: db}
+	// Service initialisation
+	us := &user.Service{Store: store}
 	// --------------- Commands ----------------
 	// seeding database command
 	seedCmd := flag.NewFlagSet("seed", flag.ExitOnError)
@@ -39,6 +42,6 @@ func main() {
 
 	switch os.Args[1] {
 	case "seed":
-		seed.HandleSeed(ctx, seedCmd, seedFile, store)
+		seed.HandleSeed(ctx, seedCmd, seedFile, us)
 	}
 }

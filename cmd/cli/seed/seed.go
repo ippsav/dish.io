@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/dish.io/internal/database/postgres"
 	"github.com/dish.io/internal/domain"
+	"github.com/dish.io/internal/services/user"
 	"os"
 )
 
@@ -14,7 +14,7 @@ type FileData struct {
 	Users []domain.User `json:"users"`
 }
 
-func HandleSeed(ctx context.Context, seedCmd *flag.FlagSet, filename *string, store *postgres.Store) {
+func HandleSeed(ctx context.Context, seedCmd *flag.FlagSet, filename *string, store *user.Service) {
 	_ = seedCmd.Parse(os.Args[2:])
 
 	// Opening seed file
@@ -42,7 +42,8 @@ func HandleSeed(ctx context.Context, seedCmd *flag.FlagSet, filename *string, st
 	for i := 0; i < numWorkers; i++ {
 		go func(user <-chan domain.User, output chan string) {
 			u := <-user
-			_, err := store.CreateUser(ctx, &u)
+			u.PasswordHash = u.Username
+			_, err := store.CreateUser(ctx, u.Email, u.Username, u.Username)
 			if err != nil {
 				fmt.Printf("Error creating user: %s", err.Error())
 				os.Exit(0)
