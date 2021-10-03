@@ -62,8 +62,9 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.RequestID)
-	//Routes
-	router.Post("/users", uh.CreateUserHandler)
+	//User Routes
+	router.Post("/users", uh.RegisterHandler)
+	router.Get("/users", uh.LoginHandler)
 
 	//Server mux
 	log.Info().Msgf("Server is running on port %d", port)

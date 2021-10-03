@@ -11,22 +11,23 @@ import (
 
 type Service interface {
 	CreateUser(ctx context.Context, email, username, password string) (*domain.User, error)
+	FindUser(ctx context.Context, email, username, password string) (*domain.User, error)
 }
 
 type UserHandler struct {
 	Service Service
 	Log     *zerolog.Logger
 }
-type CreateUserRequestJSON struct {
+type BodyRequestJSON struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (h *UserHandler) CreateUserHandler(rw http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) RegisterHandler(rw http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	ctx := r.Context()
-	value := &CreateUserRequestJSON{}
+	value := &BodyRequestJSON{}
 	switch r.Header.Get("content-type") {
 	case "application/json":
 		err := json.NewDecoder(r.Body).Decode(&value)
@@ -37,11 +38,56 @@ func (h *UserHandler) CreateUserHandler(rw http.ResponseWriter, r *http.Request)
 		}
 	default:
 		rw.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	if value.Password == "" || value.Username == "" || value.Email == "" {
+		rw.WriteHeader(http.StatusNotAcceptable)
+		return
 	}
 	user, err := h.Service.CreateUser(ctx, value.Email, value.Username, value.Password)
 	if err != nil {
 		h.Log.Err(err).Msg("Could not create user")
 		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(rw).Encode(user)
+	if err != nil {
+		h.Log.Err(err).Msgf("could not encode %v into response writer", user)
+		return
+	}
+	h.Log.Info().Msgf("the request took %v to resolve", time.Since(now))
+}
+
+func (h *UserHandler) LoginHandler(rw http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+	ctx := r.Context()
+	value := &BodyRequestJSON{}
+
+	switch r.Header.Get("content-type") {
+	case "application/json":
+		err := json.NewDecoder(r.Body).Decode(&value)
+		if err != nil {
+			h.Log.Err(err).Msg("Could not parse body")
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	default:
+		rw.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	if value.Username == "" && value.Email == "" || value.Password == "" {
+		rw.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	user, err := h.Service.FindUser(ctx, value.Email, value.Username, value.Password)
+	if err != nil {
+		h.Log.Err(err).Msg("could not find user")
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if user == nil {
+		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)

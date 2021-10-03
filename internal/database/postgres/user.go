@@ -45,6 +45,19 @@ func (s *Store) FindUserByEmail(ctx context.Context, email string) (*domain.User
 	return user, nil
 }
 
+func (s *Store) FindUserByUsername(ctx context.Context, email string) (*domain.User, error) {
+	statement, err := s.DB.PrepareContext(ctx, "SELECT * from users where username=$1")
+	if err != nil {
+		return nil, errors.Wrap(err, "could not prepare select statement")
+	}
+	user := &domain.User{}
+	err = statement.QueryRowContext(ctx, email).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not select from users db")
+	}
+	return user, nil
+}
+
 func (s *Store) CheckUserExists(ctx context.Context, username, email string) (bool, error) {
 	var count int
 	statement, err := s.DB.PrepareContext(ctx, "SELECT COUNT(*) FROM users WHERE username=$1 OR email=$2")
