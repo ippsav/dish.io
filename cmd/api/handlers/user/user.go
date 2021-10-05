@@ -24,6 +24,8 @@ type BodyRequestJSON struct {
 	Password string `json:"password"`
 }
 
+var CookieName = "qid"
+
 func (h *UserHandler) RegisterHandler(rw http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	ctx := r.Context()
@@ -90,6 +92,15 @@ func (h *UserHandler) LoginHandler(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	cookie := &http.Cookie{
+		Name:     CookieName,
+		Value:    user.ID,
+		Path:     "/",
+		MaxAge:   3 * 60 * 60,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(rw, cookie)
 	rw.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(rw).Encode(user)
 	if err != nil {
