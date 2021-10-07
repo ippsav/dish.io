@@ -32,7 +32,8 @@ func main() {
 	// seeding database command
 	seedCmd := flag.NewFlagSet("seed", flag.ExitOnError)
 	// seed command arguments
-	seedFile := seedCmd.String("filename", "seed/seed.json", "Provide a json file containing seeding data to seed database")
+	seedFile := seedCmd.String("filename", "seed/user.json", "Provide a json file containing seeding data to seed database")
+	tableArgument := seedCmd.String("table", "users", "Specify the tables name to seed")
 
 	// checking length of arguments
 	if len(os.Args) < 2 {
@@ -42,6 +43,6 @@ func main() {
 
 	switch os.Args[1] {
 	case "seed":
-		seed.HandleSeed(ctx, seedCmd, seedFile, us)
+		seed.HandleSeed(ctx, seedCmd, tableArgument, seedFile, us)
 	}
 }
