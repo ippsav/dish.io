@@ -10,11 +10,11 @@ import (
 	"os"
 )
 
-type FileData struct {
+type UsersData struct {
 	Users []domain.User `json:"users"`
 }
 
-func HandleSeed(ctx context.Context, seedCmd *flag.FlagSet, filename *string, store *user.Service) {
+func HandleSeed(ctx context.Context, seedCmd *flag.FlagSet, tableArg *string, filename *string, store *user.Service) {
 	_ = seedCmd.Parse(os.Args[2:])
 
 	// Opening seed file
@@ -25,7 +25,7 @@ func HandleSeed(ctx context.Context, seedCmd *flag.FlagSet, filename *string, st
 	}
 	//Decoding data from json file
 
-	fileData := FileData{}
+	fileData := UsersData{}
 	if err := json.NewDecoder(seedFile).Decode(&fileData); err != nil {
 		fmt.Printf("Error decoding file: %s", err.Error())
 		os.Exit(0)
